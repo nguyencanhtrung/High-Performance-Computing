@@ -1,0 +1,79 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red36\green36\blue36;\red246\green246\blue246;\red255\green255\blue255;
+}
+\margl1440\margr1440\vieww32420\viewh19580\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 -- Trung C. Nguyen  NOTE--\
+- Technology Trend\
+	To increase performance of the system we have three ways\
+		+ Increase the clock frequency of a CPU\
+		+ Do more work per cycle for 1 cpu by using complicated controller\
+		+ Parallelism, handling more tasks by using more cores (more resource) (each core with lower frequency, simpler controller)\
+\
+	Problem with: \
+		+ the first approach: cannot increase clock frequency anymore due to heat dissipation\
+		+ the second one: need complicate controller to handle and schedule more workload per cycle. But finally still reach limitation\
+		+ the third approach: programming model for a system with many cores\
+	The third approach is now the trend. GPU is a result of this trend.\
+\
+- What is the different between CPU and GPU\
+	+ CPU: optimize for latency, we try to execute task with shortest latency as possible\
+	+ GPU: optimize for throughput, we try to execute more job per unit of time as possible, time to complete a task can longer than CPU\
+\
+	+ CPU is designed with sophisticated controll, several computing unit\
+	+ GPU is designed with simple control with a lot of simple computing unit\
+\
+- Programming model\
+	CPU (host)  			GPU(device)\
+\
+			CUDA\
+\
+	Each GPU contains many mutiprocessor, each multiprocessor includes multiple ALU core or computational unit\
+\
+	GPU responds to CPU request to send data between GPU and CPU. But it is not the initiator for any of these transmission. CPU always be the boss.\
+	GPU just compute the kernel was launched by the host (new version, GPU can launch its own kernel from running kernel)\
+	In GPU programming, need to minimize the data movement between CPU and GPU (since it takes a lot of time)\
+\
+- Big idea of programming GPU\
+	+ Write a kernel as a sequential programs, and as it run on one thread\
+	+ GPU will run kernel on as many thread as you specify when launching kernel from host\
+	\
+	+ GPU is good at launching a large number of thread in parallel efficiently and effectively\
+	\
+	+ GPU supports concurrent executions - name threads. Number of thread form a warp which is assigned to one core in a multiprocessor of a GPU (normally 32 threads forms a warp)\
+	   you can define number of thread to form a block of thread. a block of thread is assigned to one multiprocessor of a GPU\
+	   Many blocks form a grid of block\
+		Each thread knows its index threadIdx.?  and which block it belongs  blockDim and gridDim\
+		threadIdx. and blockIdx. are actually a C struct which contain three dimension variables which determine position of a thread and a block\
+			threadIdx.x; threadIdx.y; threadIdx.z\
+			blockIdx.x; blockIdx.y; blockIdx.z \
+			blockDim.x; blockDim.y; blockDim.z \
+			gridDim.x; gridDim.y; gridDim.z\
+\
+- How to launch kernel from host\
+	gpuKernel<<< NUM_OF_BLOCK, NUM_OF_THREAD, specify_shared_memory_per_block_in_bytes >>>(... arguments ...)\
+\
+	specify grid of block by    "dim3(x, y, z)"\
+					dim3(w, 1, 1) == dim(w) == w;\
+\
+\pard\pardeftab720\sl320\partightenfactor0
+
+\f1\fs28 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 dim3 gridSize;  //declaration\
+dim3 blockSize; //declaration\
+\
+gridSize = dim3(4,4,1); //assignment\
+blockSize = dim3(2,2,1); //assignment\
+\pard\pardeftab720\sl320\sa280\partightenfactor0
+\cf2 \cb1 \
+\pard\pardeftab720\sl320\sa280\partightenfactor0
+
+\f0 \cf2 \cb4 \
+Or do it with initialization:\
+\pard\pardeftab720\sl320\partightenfactor0
+
+\f1 \cf2 \cb3 dim3 gridSize2(8,8,1);    //initialization\
+dim3 blockSize2(16,16,1); //initialization\
+}

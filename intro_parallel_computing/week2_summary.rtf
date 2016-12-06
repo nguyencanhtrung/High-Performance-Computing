@@ -1,0 +1,112 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red36\green36\blue36;\red246\green246\blue246;}
+\margl1440\margr1440\vieww32360\viewh19580\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 -- Trung C. Nguyen  NOTE--\
+- Summarize week 1:\
+	Parallel computing: many threads solving problem by working together.\
+	The work together => need communication and they communicate through memory\
+\
+Parallel communication pattern (how to map task (thread) and memory (communication) together)\
+	+ Map 	\
+			Tasks read from, and write to specific data elements. Rule for mapping for all thread is fix ( 1 to 1 relation for all output data element have 1 corresponding input)\
+	+ Gather\
+			Each computation gather data from different elements to compute the output result\
+			get data from distributed memory and putting result on consecutive memory range\
+	+ Scatter\
+			Now each thread read a single data value and write to different data elements\
+			writing data to un-predefined memory (distributed)\
+			Thread compute by itself where to write result\
+	+ Stencil: \
+			Tasks read input from a FIXED neighborhood in an array [Data Reuse]\
+			2D Von Neuman\
+			3D Von Neuman\
+			2D Moore\
+		Stencil operator should generate a result for every element in the output array\
+	+ Transpose:\
+			A task reorder data in memory ( 1- 1 relation sam as map)\
+	+ reduce\
+\
+	+ scan/sort\
+\
+	Maybe you confuses between stencil and gather but remember: gather can read data from arbitrary address; but stencil gather data from its neighbor. And Stencil operator should generate a result for every element in the output array\
+\
+=====================\
+Key factor of parallel communication\
+	+ How can threads efficiently access memory in concert?\
+	+ How threads communicate partial results by sharing memory in safely way?\
+\
+ ====================\
+Recall programming model of GPU\
+	+ GPU executes a kernel in many threads in parallel to solve a problem\
+	+ A group of thread form a block. A GPU is responsible for assigning a block to one SM (Streaming Multiprocessor), when assignment was perform		- All blocks can be executed in parallel depending on number of SM on a GPU card\
+		- All SM runing on parallel and independently\
+		- Programmer cannot guarantee which blocks is run first or later or at the same time. An cannot manually assign a block to a specific SM\
+		  Example: \
+			+ A GPU having 4 SM; if you specify number of blocks = 1000 \
+				=> can run 4 blocks in parallel once\
+				=> The order of execution of group of 4 depends on scheduling of GPU\
+	\
+	+ One block includes number of threads (max = 1024 threads if computation compatibility > 2.0); \
+	   One block assigns to 1 SM; One SM includes multiple of simple processors.\
+		How threads of 1 block are assigned to simple processors?\
+			32 threads group 1 warp, 1 warp is assigned to 1 simple processor; 32 threads are scheduling to execute in this simple processor (try to pipeline in execution)\
+			=> number of simple processor in 1 SM decides how many warps can be executed in parallel.\
+\
+=====================\
+	- A block is only execute in 1 SM\
+		- but 1 SM can run multiple block\
+	- GPU is responsible for assigning 1 block to 1 SM, this process cannot be controlled by programmer\
+	- CUDA makes few guarantees about when and where thread blocks will run\
+		+ all threads in 1 block run on the same SM at the same time\
+		= all blocks in a kernel finish before any blocks from the next kernel run\
+\
+	Advantages:\
+			+ Scalabilitys: if your code is design for runnning on arbitrary #SM, it will have this advatage\
+			+ No waiting on slowthread, one finish can start another immediately\
+			+ flexibility -> efficiency\
+\
+	Disadvantage:\
+			+ no assumptions how and which blocks -> SM\
+			+ No communication between blocks\
+\
+=====================\
+MEMORY MODEL of GPU\
+	- local mem for single thread\
+	- shared memory for threads in the same blocks\
+	- global memory for different kernels\
+\
+Synchronization\
+	- between threads in same block by __syncthread()  => All threads in a block have to wait when they reach to this barrier, and can only continue when all reach to this point\
+	- between synchronous kernels \
+		=> for synchronous kernel, all block in the previous kernel have to finish before starting execution of next kernel\
+\
+	- no mechanism to synchronize between blocks; but we can separate algorithm in to 2 kernels, cut will be blocks' barrier. Ultilise characteristic of synchronous kernel to do synchronization\
+	\
+=====================\
+Optimize in GPU programming\
+	- High-level strategies:\
+		Maximize arithmetic intensity       math/memory\
+			Maximize computation operation per thread\
+			\
+			Minimize time spending for memory operation per thread\
+				+ move frequently-accessed data to fast memory  (local (located in register or L1 cache) > shared >> global) >> host memory\
+				+ Coalesce global memory accesses\
+					When a thread try to access to global memory, it accesses to a chunk of memory even it just need a single location => That means GPU most efficient when threads read and write contiguous global memory locations\
+		\
+		Avoid divergence in the code\
+			In GPU programming, it is the best if all thread following the same paths. If divergence happens, the performance always base on the slowest thread\
+			Technically, 32 threads form a warp and be executed parallel in single simple core => if divergen happens in this group, execution will be divergen\
+\
+=====================\
+Atomic function in GPU and its limitation\
+	- Ensure no confiliction between threads when trying read and write a single global memory\
+	- Not support all operations (just add, substract, XOR, SAC ... ; support only integer; floating point just have add and substract;   but we can build arbitrary operation using atomicSAC)\
+	- Serialize threads execution => slowdown the whole syste, => no free lunch\
+	- No guarantee about the order of execution\
+
+\f1\fs28 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\
+}

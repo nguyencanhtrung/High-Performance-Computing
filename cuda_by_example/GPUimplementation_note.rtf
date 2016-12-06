@@ -1,0 +1,72 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww12040\viewh21000\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Heterogeneous system, components:\
+- Special purpose hardware and massively parallel accelerators\
+- GPUs\
+\
+Performance cannot scale up by just using more cores, because time for data movement is lager than arithmetic.\
+\
+Using more core get better performance (prevously, using higher frequency, but power and heat limitation prevent this approach)\
+\
+Rising of GPU for general-purpose computation\
+	- limitation of using GPU at first, \
+		+ ability to write to arbitrary locations in memory\
+		+ Impossible to predict how a GPU would deal with floating point data\
+		+ no good method to debug code was executed on the GPU\
+	- Appearance of CUDA architecture\
+		+ this architecture includes a Unified Shader pipeline, gather all data from ALU \
+		   of GPU => Now it can be used for general purpose computing\
+		+ ALU is built to comply with IEEE requirements for single precision FP\
+		+ Allowed arbitrary read and write access to memory as well as access to a share memory.\
+\
+===============================================\
+__global__                   alerts compiler that a function should be complied to run on a device\
+<<< , >>>                     #blocks and #threads pass to runtime system\
+cudaMalloc()                tell CUDA runtime to allocate the memory ON THE DEVICE\
+You can pass pointers allocated with cudaMalloc() to functions that execute on the device.\
+\
+You can use pointers allocated with cudaMalloc()to read or write memory from code that executes on the device.\
+\
+You can pass pointers allocated with cudaMalloc()to functions that execute on the host.\
+\
+You cannot use pointers allocated with cudaMalloc()to read or write memory from code that executes on the host.\
+\
+----------------------\
+cudaFree()function to release memory we\'92ve allocated with cudaMalloc().\
+-----------------------\
+you cannot modify this memory from the host. can also access memory on a device through calls to cudaMemcpy()from host code.\
+---------------------\
+cudaMemcpyDeviceToHost, instructing the runtime that the source pointer is a device pointer and the destination pointer is a host pointer.\
+----------------------\
+cudaMemcpyHostToDevice would indicate the opposite situ- ation,\
+---------------------\
+both pointers are on the device by passing cudaMemcpyDeviceToDevice. If the source and destination pointers are both on the host, we would simply use standard C\'92s memcpy()\
+------------------------\
+==========================\
+mechanism for determining which devices (if any) are present and what capa- bilities each device supports.\
+cudaGetDeviceCount()   how many devices in the system were built on the CUDA Architecture.\
+\
+ex: int count; HANDLE_ERROR( cudaGetDeviceCount( &count ) );\
+- return us struct cudaDeviceProp()\
+----------------------\
+As of CUDA 3.0, the cudaDeviceProp structure\
+-----------------------\
+cudaGetDeviceProperties() \
+-----------------------\
+Can manually choose which GPU to execute code\
+======================================================\
+NOTE in timing measurement\
+\
+\
+Important note: \
+	- Using API of cuda event to compute execution time. Time stamp is captured on GPU.\
+	- Kernel and host_function can be asynchronized => Using those API to compute execution time of application using both host kernel and gpu kernel  IS UNRELIABLE;\
+	- API cudaEventRecord(stop_time) records timestamp being placed in GPU when it is called. Principlely, to get correct timestamp, all gpu's work prior this call have to complete. To ensure this, we use cudaEventSynchronize(stop_time).\
+==========================================================\
+\
+\
+}
